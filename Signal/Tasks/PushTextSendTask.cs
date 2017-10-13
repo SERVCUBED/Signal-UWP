@@ -105,12 +105,12 @@ namespace Signal.Tasks
                 Debug.WriteLine("TextSendTask deliver");
                 await messageSender.sendMessage(address, textSecureMessage);
             }
-            catch (InvalidNumberException e /*| UnregisteredUserException e*/)
+            catch (InvalidNumberException /*| UnregisteredUserException e*/)
             {
                 //Log.w(TAG, e);
                 //throw new InsecureFallbackApprovalException(e);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Log.Warn("Delivery of message failed");
                 OnCanceled();

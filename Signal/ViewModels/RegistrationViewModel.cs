@@ -161,7 +161,7 @@ namespace Signal.ViewModels
             {
                 return PhoneNumberFormatter.formatE164(CountryCode, PhoneNumber.TrimStart('0'));
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return string.Empty;
             }
@@ -230,7 +230,7 @@ namespace Signal.ViewModels
 
                         FlipIndex += 1;
                     }
-                    catch (PushNetworkException pne)
+                    catch (PushNetworkException)
                     {
                         
                     }
@@ -361,23 +361,23 @@ namespace Signal.ViewModels
 
 
             }
-            catch (RateLimitException ex)
+            catch (RateLimitException)
             {
                 return false;
             }
-            catch (AuthorizationFailedException ex)
+            catch (AuthorizationFailedException)
             {
                 return false;
             }
-            catch (PushNetworkException ex)
+            catch (PushNetworkException)
             {
                 return false;
             }
-            catch (NonSuccessfulResponseCodeException ex)
+            catch (NonSuccessfulResponseCodeException)
             {
                 return false;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
                 //throw new Exception(ex.Message);
