@@ -86,6 +86,7 @@ namespace SignalTasks
             return Task.Run(async () =>
             {
                 Debug.WriteLine("WSC connect()...");
+                Debug.WriteLine("wsUri: " + wsUri);
 
                 if (socket == null)
                 {
@@ -135,6 +136,7 @@ namespace SignalTasks
         private async void iconnect()
         {
             Debug.WriteLine("WSC connect()...");
+            Debug.WriteLine("wsUri: " + wsUri);
 
             if (socket == null)
             {

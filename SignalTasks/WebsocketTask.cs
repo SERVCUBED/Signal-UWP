@@ -7,7 +7,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Background;
 using Windows.Networking.Sockets;
+using Windows.Storage.Streams;
+using Windows.UI.ViewManagement;
 using Windows.Web;
+using Google.ProtocolBuffers;
+using libsignalservice.websocket;
 
 namespace SignalTasks
 {
@@ -26,7 +30,9 @@ namespace SignalTasks
         private BackgroundTaskDeferral _deferral = null;
         private IBackgroundTaskInstance _taskInstance = null;
 
+        private readonly LinkedList<WebSocketProtos.WebSocketRequestMessage> incomingRequests = new LinkedList<WebSocketProtos.WebSocketRequestMessage>();
         MessageWebSocket socket;
+        //DataWriter messageWriter;
         private Timer keepAliveTimer;
 
         private bool HasRecieved = false;
@@ -54,6 +60,7 @@ namespace SignalTasks
 
                 var wsUri = PUSH_URL.Replace("https://", "wss://")
                                               .Replace("http://", "ws://") + $"/v1/websocket/?login={username}&password={password}";
+                Debug.WriteLine("wsUri: " + wsUri);
                 Uri server = new Uri(wsUri);
                 await socket.ConnectAsync(server);
                 Debug.WriteLine("WebsocketTask connected...");
@@ -91,7 +98,7 @@ namespace SignalTasks
             }
 
             //var pipe = messageReceiver.createMessagePipe();
-            // pipe.MessageReceived += OnMessageRecevied;
+            //pipe.MessageReceived += OnMessageRecevied;
 
         }
 
@@ -107,11 +114,46 @@ namespace SignalTasks
             // TODO return
             _deferral.Complete();
         }
-
+        
         private void OnMessageReceived(MessageWebSocket sender, MessageWebSocketMessageReceivedEventArgs args)
         {
             var t = args;
             HasRecieved = false;
+
+            try
+            {
+                using (DataReader reader = args.GetDataReader())
+                {
+                    reader.UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding.Utf8;
+
+                    byte[] read = new byte[reader.UnconsumedBufferLength];
+                    reader.ReadBytes(read);
+                    try
+                    {
+                        WebSocketProtos.WebSocketMessage message = WebSocketProtos.WebSocketMessage.ParseFrom(read);
+
+                        Debug.WriteLine("Message Type: " + message.Type);
+
+                        if (message.Type == WebSocketProtos.WebSocketMessage.Types.Type.REQUEST)
+                        {
+                            incomingRequests.AddFirst(message.Request);
+                            Debug.WriteLine(message.Request.Body.ToString());
+                            //OnMessageReceived(message.Request);
+                        }
+
+
+                    }
+                    catch (InvalidProtocolBufferException e)
+                    {
+                        Debug.WriteLine(e.Message);
+                    }
+
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
 
             _deferral.Complete();
         }
