@@ -91,9 +91,9 @@ namespace TextSecure
             return sessionStore.GetSubDeviceSessions(name);
         }
 
-        public bool IsTrustedIdentity(string name, IdentityKey identityKey)
+        public bool IsTrustedIdentity(SignalProtocolAddress address, IdentityKey identityKey)
         {
-            return identityKeyStore.IsTrustedIdentity(name, identityKey);
+            return identityKeyStore.IsTrustedIdentity(address, identityKey);
         }
 
         public PreKeyRecord LoadPreKey(uint preKeyId)
@@ -126,9 +126,9 @@ namespace TextSecure
             signedPreKeyStore.RemoveSignedPreKey(signedPreKeyId);
         }
 
-        public bool SaveIdentity(string name, IdentityKey identityKey)
+        public bool SaveIdentity(SignalProtocolAddress address, IdentityKey identityKey)
         {
-            identityKeyStore.SaveIdentity(name, identityKey);
+            identityKeyStore.SaveIdentity(address, identityKey);
             return true;
         }
 
@@ -145,16 +145,6 @@ namespace TextSecure
         public void StoreSignedPreKey(uint signedPreKeyId, SignedPreKeyRecord record)
         {
             signedPreKeyStore.StoreSignedPreKey(signedPreKeyId, record);
-        }
-
-        public bool SaveIdentity(SignalProtocolAddress address, IdentityKey identityKey)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool IsTrustedIdentity(SignalProtocolAddress address, IdentityKey identityKey)
-        {
-            throw new NotImplementedException();
         }
     }
 }

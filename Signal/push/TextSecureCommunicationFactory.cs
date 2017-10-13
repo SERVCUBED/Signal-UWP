@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using libsignalservice.push;
 using TextSecure.util;
 
 namespace Signal.Push
@@ -39,28 +40,27 @@ namespace Signal.Push
         public static readonly string PUSH_URL = "http://textsecure.simondieterle.net";
 #else
         public static readonly string PUSH_URL = "http://textsecure-staging.simondieterle.net";
-#endif        
+#endif
+        public static SignalServiceUrl[] PUSH_URLS = {new SignalServiceUrl(PUSH_URL, new TextSecurePushTrustStore()) };
 
         private static readonly string USER_AGENT = Signal.App.CurrentVersion;
 
         public static SignalServiceAccountManager createManager()
         {
-            return new SignalServiceAccountManager(PUSH_URL,
-                                                new TextSecurePushTrustStore(),
+            return new SignalServiceAccountManager(PUSH_URLS,
                                                 TextSecurePreferences.getLocalNumber(),
                                                 TextSecurePreferences.getPushServerPassword(), USER_AGENT);
         }
 
         public static SignalServiceAccountManager createManager(String number, String password)
         {
-            return new SignalServiceAccountManager(PUSH_URL, new TextSecurePushTrustStore(),
+            return new SignalServiceAccountManager(PUSH_URLS,
                                                 number, password, USER_AGENT);
         }
 
         public static SignalServiceMessageReceiver createReceiver()
         {
-            return new SignalServiceMessageReceiver(PUSH_URL,
-                                             new TextSecurePushTrustStore(),
+            return new SignalServiceMessageReceiver(PUSH_URLS,
                                              new DynamicCredentialsProvider(), USER_AGENT);
         }
 

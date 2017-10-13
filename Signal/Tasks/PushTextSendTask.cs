@@ -24,8 +24,8 @@ namespace Signal.Tasks
     class PushTextSendTask : PushSendTask
     {
         private long messageId;
-        protected SignalServiceMessageSender messageSender = new SignalServiceMessageSender(TextSecureCommunicationFactory.PUSH_URL, new TextSecurePushTrustStore(), TextSecurePreferences.getLocalNumber(), TextSecurePreferences.getPushServerPassword(), new TextSecureAxolotlStore(),
-                                                                                  May<SignalServiceMessageSender.EventListener>.NoValue, App.CurrentVersion);
+        protected SignalServiceMessageSender messageSender = new SignalServiceMessageSender(TextSecureCommunicationFactory.PUSH_URLS, TextSecurePreferences.getLocalNumber(), TextSecurePreferences.getPushServerPassword(), new TextSecureAxolotlStore(),
+                                                                                  null, May<SignalServiceMessageSender.EventListener>.NoValue, App.CurrentVersion);
 
         public PushTextSendTask(long messageId, string destination) : base(destination)
         {

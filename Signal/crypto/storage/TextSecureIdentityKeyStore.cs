@@ -63,5 +63,15 @@ namespace TextSecure.crypto.storage
             return DatabaseFactory.getIdentityDatabase()
                                   .IsValidIdentity(recipientId, identityKey); 
         }
+
+        public bool SaveIdentity(SignalProtocolAddress address, IdentityKey identityKey)
+        {
+            return SaveIdentity(address.getName(), identityKey);
+        }
+
+        public bool IsTrustedIdentity(SignalProtocolAddress address, IdentityKey identityKey)
+        {
+            return IsTrustedIdentity(address.getName(), identityKey);
+        }
     }
 }

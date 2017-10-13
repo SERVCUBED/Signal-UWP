@@ -115,7 +115,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\libsignalservice-uwp\libsignalservice-uwp\libsignalservice-uwp.csproj">
-      <Project>{FAB01AA5-DAFA-4FD5-8642-770C6548ADF8}</Project>
+      <Project>{fab01aa5-dafa-4fd5-8642-770c6548adf8}</Project>
       <Name>libsignalservice-uwp</Name>
     </ProjectReference>
   </ItemGroup>
