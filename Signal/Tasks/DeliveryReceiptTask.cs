@@ -19,7 +19,7 @@ namespace Signal.Tasks
         private string relay;
 
         protected SignalServiceMessageSender messageSender = new SignalServiceMessageSender(TextSecureCommunicationFactory.PUSH_URLS, TextSecurePreferences.getLocalNumber(), TextSecurePreferences.getPushServerPassword(), new TextSecureAxolotlStore(),
-                                                                          null, May<SignalServiceMessageSender.EventListener>.NoValue, App.CurrentVersion);
+                                                                          May<SignalServiceMessagePipe>.NoValue, May<SignalServiceMessageSender.EventListener>.NoValue, App.CurrentVersion);
 
 
         public DeliveryReceiptTask(string destination, long timestamp, string relay)

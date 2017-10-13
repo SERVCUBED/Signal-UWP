@@ -34,13 +34,13 @@ namespace Signal.Push
         public static readonly string PUSH_URL = "https://textsecure-service.whispersystems.org";
 #else
         public static readonly string PUSH_URL = "https://textsecure-service-staging.whispersystems.org";
-#endif        
+#endif
 
-//#if RELEASE // TODO: RELEASE
-//        public static readonly string PUSH_URL = "http://textsecure.simondieterle.net";
-//#else
-//        public static readonly string PUSH_URL = "http://textsecure-staging.simondieterle.net";
-//#endif
+        //#if RELEASE // TODO: RELEASE
+        //        public static readonly string PUSH_URL = "http://textsecure.simondieterle.net";
+        //#else
+        //        public static readonly string PUSH_URL = "http://textsecure-staging.simondieterle.net";
+        //#endif
         public static SignalServiceUrl[] PUSH_URLS = {new SignalServiceUrl(PUSH_URL, new TextSecurePushTrustStore()) };
 
         private static readonly string USER_AGENT = Signal.App.CurrentVersion;

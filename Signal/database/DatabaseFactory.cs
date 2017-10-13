@@ -31,7 +31,7 @@ namespace Signal.Database
 
     public class DatabaseFactory
     {
-        public static string APPDB_PATH = Path.Combine(Windows.Storage.ApplicationData.Current.LocalFolder.Path, "app.db");
+        public static string APPDB_PATH = Path.Combine(Windows.Storage.ApplicationData.Current.LocalFolder.Path, "TextSecureApp.db");
 
         private static Object locker = new Object();
         private static DatabaseFactory instance;
