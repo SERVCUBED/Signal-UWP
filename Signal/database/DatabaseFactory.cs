@@ -114,8 +114,7 @@ namespace Signal.Database
 
         private DatabaseFactory()
         {
-
-           connection = new SQLiteConnection(new SQLite.Net.Platform.WinRT.SQLitePlatformWinRT(), APPDB_PATH);
+            connection = new SQLiteConnection(new SQLite.Net.Platform.WinRT.SQLitePlatformWinRT(), APPDB_PATH);
            
 
             /*    var sync = new SQLiteConnection(APPDB_PATH);
