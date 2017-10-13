@@ -99,8 +99,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\CountryCodes.xml" />
-    <Content Include="Assets\textsecure-service.whispersystems.org.crt" />
-    <Content Include="Assets\textsecure-service-staging.whispersystems.org.crt" />
+    <Content Include="Assets\textsecure-service.whispersystems.org.cer" />
+    <Content Include="Assets\textsecure-service-staging.whispersystems.org.cer" />
     <None Include="MultilingualResources\TextSecure.de.xlf" />
     <None Include="project.json" />
     <None Include="TextSecure_StoreKey.pfx" />

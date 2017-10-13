@@ -57,8 +57,8 @@
     </Extension>
     <Extension Category="windows.certificates">
       <Certificates>
-        <Certificate StoreName="Root" Content="Assets\textsecure-service.whispersystems.org.crt" />
-        <Certificate StoreName="Staging" Content="Assets\textsecure-service-staging.whispersystems.org.crt" />
+        <Certificate StoreName="Root" Content="Assets\textsecure-service.whispersystems.org.cer" />
+        <Certificate StoreName="Staging" Content="Assets\textsecure-service-staging.whispersystems.org.cer" />
         <TrustFlags ExclusiveTrust="true" />
       </Certificates>
     </Extension>
