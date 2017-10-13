@@ -15,11 +15,11 @@ namespace SignalTasks
 
     public sealed class WebsocketTask : IBackgroundTask
     {
-#if RELEASE // TODO: RELEASE
-        private static readonly string PUSH_URL = "http://textsecure.simondieterle.net";
+#if RELEASE
+        private static readonly string PUSH_URL = "https://textsecure-service.whispersystems.org";
 #else
-        private static readonly string PUSH_URL = "http://textsecure-staging.simondieterle.net";
-#endif  
+        private static readonly string PUSH_URL = "https://textsecure-service-staging.whispersystems.org";
+#endif
 
         BackgroundTaskCancellationReason _cancelReason = BackgroundTaskCancellationReason.Abort;
         private volatile bool _cancelRequested = false;
