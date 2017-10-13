@@ -9,6 +9,7 @@ using Windows.ApplicationModel.Activation;
 using Windows.UI.Xaml;
 using libsignalservice;
 using libsignalservice.messages;
+using libsignalservice.util;
 using Signal.Push;
 using Signal.Tasks;
 using Signal.Tasks.Library;
@@ -30,6 +31,9 @@ namespace Signal
         public SignalApp()
         {
             this.Suspending += OnSuspending;
+#if DEBUG
+            HttpClientCertificatePolicyState.Policy = HttpClientCertificatePolicy.DevelopmentMode;
+#endif
         }
 
 
@@ -51,6 +55,7 @@ namespace Signal
                     Debug.WriteLine("binding failed");
                 };
             }
+
 #endif
 
             switch (args.PreviousExecutionState)
