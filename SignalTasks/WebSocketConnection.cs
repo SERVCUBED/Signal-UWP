@@ -18,122 +18,58 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.ProtocolBuffers;
+using libsignal.util;
+using libsignalservice.push;
+using libsignalservice.util;
 using Windows.Foundation;
 using Windows.Networking.Sockets;
 using Windows.Storage.Streams;
-using Windows.Web;
 using static libsignalservice.websocket.WebSocketProtos;
-using libsignalservice.push;
-using libsignalservice.util;
-using Google.ProtocolBuffers;
 
 namespace SignalTasks
 {
     public sealed class WebSocketConnection //: WebSocketEventListener
     {
-
-
         private static readonly int KEEPALIVE_TIMEOUT_SECONDS = 55;
 
         private readonly LinkedList<WebSocketRequestMessage> incomingRequests = new LinkedList<WebSocketRequestMessage>();
+        private readonly Dictionary<long, Tuple<int, string>> outgoingRequests = new Dictionary<long, Tuple<int, string>>();
 
-        private readonly String wsUri;
+        private readonly string wsUri;
         private readonly TrustStore trustStore;
         private readonly CredentialsProvider credentialsProvider;
         private readonly string userAgent;
 
+        private Timer keepAliveTimer;
 
         MessageWebSocket socket;
         DataWriter messageWriter;
+        private int attempts;
+        private bool connected;
 
-        /*public event EventHandler Connected;
-        public event EventHandler Closed;
-        public event TypedEventHandler<WebSocketConnection, WebSocketRequestMessage> MessageReceived;*/
-        public event EventHandler<Object> Connected;
-        public event EventHandler<Object> MessageReceived;
-        public event EventHandler<Object> Disconncted;
+        internal event EventHandler Connected;
+        internal event EventHandler Closed;
+        internal event TypedEventHandler<WebSocketConnection, WebSocketRequestMessage> MessageReceived;
 
-        private void OnConnected(object args)
+        internal WebSocketConnection(string httpUri, TrustStore trustStore, CredentialsProvider credentialsProvider, string userAgent)
         {
-            var ev = Connected;
-            ev?.Invoke(this,args);
-        }
-        private void OnMessageReceived(object args)
-        {
-            var ev = MessageReceived;
-            ev?.Invoke(this, args);
-        }
-        private void OnDisconncted(object args)
-        {
-            var ev = Disconncted;
-            ev?.Invoke(this, args);
-        }
-
-        public WebSocketConnection(String httpUri, string username, string password, string userAgent)
-        { 
+            this.trustStore = trustStore;
+            this.credentialsProvider = credentialsProvider;
+            this.userAgent = userAgent;
+            this.attempts = 0;
+            this.connected = false;
             this.wsUri = httpUri.Replace("https://", "wss://")
-                                              .Replace("http://", "ws://") + $"/v1/websocket/?login={username}&password={password}";
+                .Replace("http://", "ws://") + $"/v1/websocket/?login={credentialsProvider.GetUser()}&password={credentialsProvider.GetPassword()}";
             this.userAgent = userAgent;
         }
 
-        public IAsyncAction Connect()
-        {
-            return Task.Run(async () =>
-            {
-                Debug.WriteLine("WSC connect()...");
-                Debug.WriteLine("wsUri: " + wsUri);
 
-                if (socket == null)
-                {
-                    socket = new MessageWebSocket();
-                    if (userAgent != null) socket.SetRequestHeader("X-Signal-Agent", userAgent);
-                    socket.MessageReceived += OnMessageReceived;
-                    socket.Closed += OnClosed;
-
-                    try
-                    {
-                        Uri server = new Uri(wsUri);
-                        await socket.ConnectAsync(server);
-                        Debug.WriteLine("WSC connected...");
-                        OnConnected(EventArgs.Empty);
-                        //keepAliveTimer = new Timer(sendKeepAlive, null, TimeSpan.FromSeconds(KEEPALIVE_TIMEOUT_SECONDS), TimeSpan.FromSeconds(KEEPALIVE_TIMEOUT_SECONDS));
-
-
-                        //messageWriter = new DataWriter(socket.OutputStream);
-                    }
-                    catch (Exception e)
-                    {
-                        WebErrorStatus status = WebSocketError.GetStatus(e.GetBaseException().HResult);
-
-                        switch (status)
-                        {
-                            case WebErrorStatus.CannotConnect:
-                            case WebErrorStatus.NotFound:
-                            case WebErrorStatus.RequestTimeout:
-                                Debug.WriteLine("Cannot connect to the server. Please make sure " +
-                                    "to run the server setup script before running the sample.");
-                                break;
-
-                            case WebErrorStatus.Unknown:
-                                throw;
-
-                            default:
-                                Debug.WriteLine("Error: " + status);
-                                break;
-                        }
-
-                        throw;
-                    }
-
-                }
-            }).AsAsyncAction();
-        }
-        private async void iconnect()
+        internal async Task connect()
         {
             Debug.WriteLine("WSC connect()...");
             Debug.WriteLine("wsUri: " + wsUri);
@@ -141,7 +77,10 @@ namespace SignalTasks
             if (socket == null)
             {
                 socket = new MessageWebSocket();
-                if (userAgent != null) socket.SetRequestHeader("X-Signal-Agent", userAgent);
+                if (userAgent != null)
+                {
+                    socket.SetRequestHeader("X-Signal-Agent", userAgent);
+                }
                 socket.MessageReceived += OnMessageReceived;
                 socket.Closed += OnClosed;
 
@@ -149,16 +88,18 @@ namespace SignalTasks
                 {
                     Uri server = new Uri(wsUri);
                     await socket.ConnectAsync(server);
-                    Debug.WriteLine("WSC connected...");
-                    OnConnected(EventArgs.Empty);
-                    //keepAliveTimer = new Timer(sendKeepAlive, null, TimeSpan.FromSeconds(KEEPALIVE_TIMEOUT_SECONDS), TimeSpan.FromSeconds(KEEPALIVE_TIMEOUT_SECONDS));
-
-                    
-                    //messageWriter = new DataWriter(socket.OutputStream);
+                    if (socket != null)
+                    {
+                        attempts = 0;
+                        connected = true;
+                    }
+                    //Connected(this, EventArgs.Empty);
+                    keepAliveTimer = new Timer(sendKeepAlive, null, TimeSpan.FromSeconds(KEEPALIVE_TIMEOUT_SECONDS), TimeSpan.FromSeconds(KEEPALIVE_TIMEOUT_SECONDS));
+                    messageWriter = new DataWriter(socket.OutputStream);
                 }
                 catch (Exception e)
                 {
-                    WebErrorStatus status = WebSocketError.GetStatus(e.GetBaseException().HResult);
+                    /*WebErrorStatus status = WebSocketError.GetStatus(e.GetBaseException().HResult);
 
                     switch (status)
                     {
@@ -175,29 +116,78 @@ namespace SignalTasks
                         default:
                             Debug.WriteLine("Error: " + status);
                             break;
-                    }
-
-                    throw;
+                    }*/
                 }
-                
+
+                this.connected = false;
+                Debug.WriteLine("WSC connected...");
             }
         }
 
-        public void disconnect()
+        internal void disconnect()
         {
             Debug.WriteLine("WSC disconnect()...");
 
             if (socket != null)
             {
-                socket.Close(1000, "None");
-                OnDisconncted(EventArgs.Empty);
+
+                socket.Close(1000, "OK");
                 socket = null;
+                connected = false;
             }
 
+            /*if (keepAliveSender != null)
+            {
+                keepAliveSender.shutdown();
+                keepAliveSender = null;
+            }*/
         }
 
+        /*public  WebSocketRequestMessage readRequest(ulong timeoutMillis)
+        {
+            if (client == null)
+            {
+                throw new Exception("Connection closed!");
+            }
 
-        /*public async void sendMessage(WebSocketMessage message)
+            ulong startTime = KeyHelper.getTime();
+
+            while (client != null && incomingRequests.Count == 0 && elapsedTime(startTime) < timeoutMillis)
+            {
+                //Util.wait(this, Math.Max(1, timeoutMillis - elapsedTime(startTime)));
+            }
+
+            if (incomingRequests.Count == 0 && client == null) throw new Exception("Connection closed!");
+            else if (incomingRequests.Count == 0) throw new TimeoutException("Timeout exceeded");
+            else
+            {
+                WebSocketRequestMessage message = incomingRequests.First();
+                incomingRequests.RemoveFirst();
+                return message;
+            }
+        }*/
+
+        internal async Task<Tuple<int, string>> sendRequest(WebSocketRequestMessage request)
+        {
+            if (socket == null || !connected)
+            {
+                throw new IOException("No connection!");
+            }
+
+            WebSocketMessage message = WebSocketMessage.CreateBuilder()
+                .SetType(WebSocketMessage.Types.Type.REQUEST)
+                .SetRequest(request)
+                .Build();
+
+            Tuple<int, string> empty = new Tuple<int, string>(0, string.Empty);
+            outgoingRequests.Add((long)request.Id, empty);
+
+            messageWriter.WriteBytes(message.ToByteArray());
+            await messageWriter.StoreAsync();
+            return empty;
+        }
+
+        /*internal async Task sendMessage(WebSocketMessage message)
         {
             if (socket == null)
             {
@@ -208,7 +198,7 @@ namespace SignalTasks
             await messageWriter.StoreAsync();
         }
 
-        public async void sendResponse(WebSocketResponseMessage response)
+        internal async Task sendResponse(WebSocketResponseMessage response)
         {
             if (socket == null)
             {
@@ -224,23 +214,28 @@ namespace SignalTasks
             await messageWriter.StoreAsync();
         }*/
 
-        /*private void sendKeepAlive(object state)
+        private void sendKeepAlive(object state)
         {
-            Debug.WriteLine("keepAlive");
-                sendMessage(WebSocketMessage.CreateBuilder()
-                                                   .SetType(WebSocketMessage.Types.Type.REQUEST)
-                                                   .SetRequest(WebSocketRequestMessage.CreateBuilder()
-                                                                                      .SetId(KeyHelper.getTime())
-                                                                                      .SetPath("/v1/keepalive")
-                                                                                      .SetVerb("GET")
-                                                                                      .Build()).Build());
- 
+            if (socket != null)
+            {
+                Debug.WriteLine("keepAlive");
+                byte[] message = WebSocketMessage.CreateBuilder()
+                    .SetType(WebSocketMessage.Types.Type.REQUEST)
+                    .SetRequest(WebSocketRequestMessage.CreateBuilder()
+                        .SetId(KeyHelper.getTime())
+                    .SetPath("/v1/keepalive")
+                    .SetVerb("GET")
+                    .Build()).Build()
+                    .ToByteArray();
+                messageWriter.WriteBytes(message);
+                messageWriter.StoreAsync();
+            }
         }
 
         private ulong elapsedTime(ulong startTime)
         {
             return KeyHelper.getTime() - startTime;
-        } */
+        }
 
         /*public void shutdown()
         {
@@ -248,9 +243,29 @@ namespace SignalTasks
         }
     }*/
 
-        private void OnClosed(IWebSocket sender, WebSocketClosedEventArgs args)
+        private async void OnClosed(IWebSocket sender, WebSocketClosedEventArgs args)
         {
             Debug.WriteLine("WSC disconnected...");
+            connected = false;
+
+            for (int i = 0; i < outgoingRequests.Count; i++)
+            {
+                outgoingRequests.Remove(i);
+                i--;
+            }
+
+            keepAliveTimer.Dispose();
+            keepAliveTimer = null;
+
+            await Task.Delay(Math.Min(++attempts * 200, (int)TimeSpan.FromSeconds(15).TotalMilliseconds));
+
+            if (socket != null)
+            {
+                socket.Close(1000, "OK");
+                socket = null;
+                connected = false;
+                await connect();
+            }
         }
 
         private void OnMessageReceived(MessageWebSocket sender, MessageWebSocketMessageReceivedEventArgs args)
@@ -272,10 +287,17 @@ namespace SignalTasks
                         if (message.Type == WebSocketMessage.Types.Type.REQUEST)
                         {
                             incomingRequests.AddFirst(message.Request);
-                            OnMessageReceived(message.Request);
+                            MessageReceived(this, message.Request);
+                        }
+                        else if (message.Type == WebSocketMessage.Types.Type.RESPONSE)
+                        {
+                            if (outgoingRequests.ContainsKey((long)message.Response.Id))
+                            {
+                                outgoingRequests[(long)message.Response.Id] = Tuple.Create((int)message.Response.Status,
+                                    Encoding.UTF8.GetString(message.Response.Body.ToByteArray()));
+                            }
                         }
 
-                        
                     }
                     catch (InvalidProtocolBufferException e)
                     {

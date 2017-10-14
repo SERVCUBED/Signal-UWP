@@ -5,12 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.ApplicationModel;
 using Windows.ApplicationModel.Background;
 using Windows.Networking.Sockets;
 using Windows.Storage.Streams;
 using Windows.UI.ViewManagement;
 using Windows.Web;
 using Google.ProtocolBuffers;
+using libsignalservice.util;
 using libsignalservice.websocket;
 
 namespace SignalTasks
@@ -30,10 +32,9 @@ namespace SignalTasks
         private BackgroundTaskDeferral _deferral = null;
         private IBackgroundTaskInstance _taskInstance = null;
 
-        private readonly LinkedList<WebSocketProtos.WebSocketRequestMessage> incomingRequests = new LinkedList<WebSocketProtos.WebSocketRequestMessage>();
-        MessageWebSocket socket;
-        //DataWriter messageWriter;
-        private Timer keepAliveTimer;
+        private static string CurrentVersion => $"TextSecure for Windows {Package.Current.Id.Version.Major}.{Package.Current.Id.Version.Minor}.{Package.Current.Id.Version.Build}-{Package.Current.Id.Version.Revision}";
+
+        private WebSocketConnection connection;
 
         private bool HasRecieved = false;
 
@@ -43,118 +44,20 @@ namespace SignalTasks
 
             _deferral = taskInstance.GetDeferral();
             _taskInstance = taskInstance;
-
-            //var messageReceiver = new TextSecureMessageReceiver(PUSH_URL, TextSecurePreferences.getLocalNumber(), TextSecurePreferences.getPushServerPassword(), TextSecurePreferences.getSignalingKey(), "Test User Agent");
-            //var connection = new WebSocketConnection(PUSH_URL, TextSecurePreferences.getLocalNumber(), TextSecurePreferences.getPushServerPassword(), "Test User Agent");
-            //connection.Connected += OnConnected;
+            
             var username = TextSecurePreferences.getLocalNumber();
             var password = TextSecurePreferences.getPushServerPassword();
-            var userAgent = "ASdfA";
+            
+            connection = new WebSocketConnection(PUSH_URL, new TextSecurePushTrustStore(), new StaticCredentialsProvider(username, password, TextSecurePreferences.getSignalingKey()), CurrentVersion);
 
-            try
-            {
-                socket = new MessageWebSocket();
-                if (userAgent != null) socket.SetRequestHeader("X-Signal-Agent", userAgent);
-                socket.MessageReceived += OnMessageReceived;
-                socket.Closed += OnClosed;
-
-                var wsUri = PUSH_URL.Replace("https://", "wss://")
-                                              .Replace("http://", "ws://") + $"/v1/websocket/?login={username}&password={password}";
-                Debug.WriteLine("wsUri: " + wsUri);
-                Uri server = new Uri(wsUri);
-                await socket.ConnectAsync(server);
-                Debug.WriteLine("WebsocketTask connected...");
-                keepAliveTimer = new Timer(sendDisconnect, null, TimeSpan.FromSeconds(15), Timeout.InfiniteTimeSpan);
-
-
-                //messageWriter = new DataWriter(socket.OutputStream);
-
-
-
-            }
-            catch (Exception e)
-            {
-                WebErrorStatus status = WebSocketError.GetStatus(e.GetBaseException().HResult);
-
-                switch (status)
-                {
-                    case WebErrorStatus.CannotConnect:
-                    case WebErrorStatus.NotFound:
-                    case WebErrorStatus.RequestTimeout:
-                        Debug.WriteLine("Cannot connect to the server. Please make sure " +
-                            "to run the server setup script before running the sample.");
-                        break;
-
-                    case WebErrorStatus.Unknown:
-                        throw;
-
-                    default:
-                        Debug.WriteLine("Error: " + status);
-                        break;
-                }
-
-                Debug.WriteLine("fuuuu");
-                socket.Close(1000, "None");
-            }
-
+            await connection.connect();
             //var pipe = messageReceiver.createMessagePipe();
             //pipe.MessageReceived += OnMessageRecevied;
 
         }
-
-        private void sendDisconnect(object state)
-        {
-            socket.Close(1000, "None");
-        }
-
-        private void OnClosed(IWebSocket sender, WebSocketClosedEventArgs args)
-        {
-            Debug.WriteLine("WebsocketTask disconnected...");
-            var t = args;
-            // TODO return
-            _deferral.Complete();
-        }
         
-        private void OnMessageReceived(MessageWebSocket sender, MessageWebSocketMessageReceivedEventArgs args)
+        private void OnMessageReceived()
         {
-            var t = args;
-            HasRecieved = false;
-
-            try
-            {
-                using (DataReader reader = args.GetDataReader())
-                {
-                    reader.UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding.Utf8;
-
-                    byte[] read = new byte[reader.UnconsumedBufferLength];
-                    reader.ReadBytes(read);
-                    try
-                    {
-                        WebSocketProtos.WebSocketMessage message = WebSocketProtos.WebSocketMessage.ParseFrom(read);
-
-                        Debug.WriteLine("Message Type: " + message.Type);
-
-                        if (message.Type == WebSocketProtos.WebSocketMessage.Types.Type.REQUEST)
-                        {
-                            incomingRequests.AddFirst(message.Request);
-                            Debug.WriteLine(message.Request.Body.ToString());
-                            //OnMessageReceived(message.Request);
-                        }
-
-
-                    }
-                    catch (InvalidProtocolBufferException e)
-                    {
-                        Debug.WriteLine(e.Message);
-                    }
-
-                }
-            }
-            catch (Exception e)
-            {
-                throw new Exception(e.Message);
-            }
-
             _deferral.Complete();
         }
 
