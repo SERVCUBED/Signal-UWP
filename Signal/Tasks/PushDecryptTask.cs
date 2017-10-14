@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using libsignal.protocol;
 using libsignal.util;
 using Signal.Messages;
+using Signal.Models;
 using Signal.Tasks.Library;
 using Signal.Util;
 using TextSecure;
@@ -341,7 +342,7 @@ namespace Signal.Tasks
             textMessage = new IncomingEncryptedMessage(textMessage, body);
             var messageAndThreadId = textMessageDatabase.InsertMessageInbox(textMessage);
             
-            ToastHelper.NotifyNewMessage(messageAndThreadId.second());
+            ToastHelper.NotifyNewMessage(messageAndThreadId.second(), envelope.getSource(), body);
         }
         private void handleInvalidVersionMessage(SignalServiceEnvelope envelope,
                                             May<long> smsMessageId)

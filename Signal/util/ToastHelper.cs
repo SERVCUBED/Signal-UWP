@@ -15,7 +15,7 @@ namespace Signal.Util
     public class ToastHelper
     {
 
-        public static void NotifyNewMessage(long threadId)
+        public static void NotifyNewMessage(long threadId, string senderName, string body)
         {
             var content = new ToastContent()
             {
@@ -29,8 +29,12 @@ namespace Signal.Util
                 {
                     TitleText = new ToastText()
                     {
-                        Text = $"Message received"
+                        Text = $"Message from " + senderName
                     },
+                    BodyTextLine1 = new ToastText()
+                    {
+                        Text = body
+                    }
                 },
 
                 /*Audio = new ToastAudio()
