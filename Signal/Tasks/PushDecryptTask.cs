@@ -342,7 +342,7 @@ namespace Signal.Tasks
             textMessage = new IncomingEncryptedMessage(textMessage, body);
             var messageAndThreadId = textMessageDatabase.InsertMessageInbox(textMessage);
             
-            ToastHelper.NotifyNewMessage(messageAndThreadId.second(), envelope.getSource(), body);
+            ToastHelper.NotifyNewMessage(messageAndThreadId.second(), DatabaseFactory.getDirectoryDatabase().GetForNumber(envelope.getSource()).Name, body);
         }
         private void handleInvalidVersionMessage(SignalServiceEnvelope envelope,
                                             May<long> smsMessageId)

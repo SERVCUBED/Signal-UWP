@@ -9,7 +9,7 @@ It is intended to become a working Signal-like client for UWP (Universal Windows
 ## Subprojects
 * [curve25519](https://github.com/golf1052/curve25519-pcl) - by langboost
 * [libsignal-protocol-pcl](https://github.com/golf1052/libsignal-protocol-pcl) - C# port of libsignal-protocol-java
-* [libsignalservice-uwp](https://github.com/golf1052/libsignalservice-uwp) - C# port of libsignal-service-java
+* [libsignalservice-uwp](https://github.com/SERVCUBED/libsignalservice-uwp) - C# port of libsignal-service-java
 * libsettings: A library for UserControls like a simpler UI for settings
 * SignalTask: Background processes needed for WNS push
 * Signal: The app

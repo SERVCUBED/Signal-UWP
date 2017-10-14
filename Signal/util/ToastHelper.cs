@@ -81,6 +81,36 @@ namespace Signal.Util
             ToastNotificationManager.CreateToastNotifier().Show(noti);
         }
 
+        public static void NotifyWSCFailed()
+        {
+            var content = new ToastContent()
+            {
+                Launch = new QueryString()
+                {
+                    {"action", "reconnectWSC" }
+                }.ToString(),
+
+                Visual = new ToastVisual()
+                {
+                    TitleText = new ToastText()
+                    {
+                        Text = $"Unable to connect to WSC"
+                    },
+                },
+
+                /*Audio = new ToastAudio()
+                {
+                    Src = new Uri("ms-winsoundevent:Notification.IM")
+                }*/
+            };
+
+            var doc = content.GetXml();
+
+            // Generate WinRT notification
+            var noti = new ToastNotification(doc);
+            ToastNotificationManager.CreateToastNotifier().Show(noti);
+        }
+
         public static void NewMessage(MessageRecord message)
         {
             var content = new ToastContent()

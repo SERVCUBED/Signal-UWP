@@ -53,6 +53,7 @@ namespace SignalTasks
         private bool connected;
 
         internal event EventHandler Connected;
+        internal event EventHandler ConnectionFailed;
         internal event EventHandler Closed;
         internal event TypedEventHandler<WebSocketConnection, WebSocketRequestMessage> MessageReceived;
 
@@ -117,9 +118,11 @@ namespace SignalTasks
                             Debug.WriteLine("Error: " + status);
                             break;
                     }*/
+                    this.connected = false;
+                    ConnectionFailed?.Invoke(this, EventArgs.Empty);
+                    Debug.WriteLine("Unable to connect WSC");
                 }
 
-                this.connected = false;
                 Debug.WriteLine("WSC connected...");
             }
         }

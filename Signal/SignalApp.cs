@@ -126,6 +126,7 @@ namespace Signal
                     var messageReceiver = TextSecureCommunicationFactory.createReceiver();
                     pipe = messageReceiver.createMessagePipe();
                     pipe.MessageReceived += OnMessageRecevied;
+                    pipe.ConnectionFailed += OnConnectionFailed;
                 }
                 catch (Exception ex) { Debug.WriteLine("Failed asd:" + ex.Message); }
 
@@ -138,6 +139,11 @@ namespace Signal
             var task = new PushContentReceiveTask();
             task.handle(envelope, false);
             //throw new NotImplementedException("OnMessageReceived");
+        }
+
+        private void OnConnectionFailed(object sender, EventArgs e)
+        {
+            ToastHelper.NotifyWSCFailed();
         }
 
         /*

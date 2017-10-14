@@ -48,9 +48,10 @@ namespace SignalTasks
             var username = TextSecurePreferences.getLocalNumber();
             var password = TextSecurePreferences.getPushServerPassword();
             
-            connection = new WebSocketConnection(PUSH_URL, new TextSecurePushTrustStore(), new StaticCredentialsProvider(username, password, TextSecurePreferences.getSignalingKey()), CurrentVersion);
+            // TODO Disabled for now until messages are saved
+            //connection = new WebSocketConnection(PUSH_URL, new TextSecurePushTrustStore(), new StaticCredentialsProvider(username, password, TextSecurePreferences.getSignalingKey()), CurrentVersion);
+            //await connection.connect();
 
-            await connection.connect();
             //var pipe = messageReceiver.createMessagePipe();
             //pipe.MessageReceived += OnMessageRecevied;
 
